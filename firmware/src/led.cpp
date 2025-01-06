@@ -10,7 +10,7 @@
 #define BRIGHTNESS  175      // Brightness of the LEDs (0 - 255)
 #define LED_TYPE    WS2812B  // Type of LED strip
 #define COLOR_ORDER GRB      // Color order of the LED strip
-#define FAST_UPDATE_INTERVAL 15 // Interval for faster updates temporarily
+#define FAST_UPDATE_INTERVAL 4 // Interval for faster updates temporarily
 #define SLOW_UPDATE_INTERVAL 45 // Interval for slow continuous update
 
 
@@ -47,6 +47,10 @@ void updateLed(uint8_t toUpdateHue){
   updateLEDsTask.setInterval(FAST_UPDATE_INTERVAL);
 }
 
+void setRandomColor(){
+  updateLed(targetHue + random(75, 180));
+}
+
 void ledOff()
 {
     FastLED.clear();
@@ -54,8 +58,7 @@ void ledOff()
 }
 
 void updateLEDsCallback() {
-  if (currentHue == targetHue)
-  {
+  if (currentHue == targetHue){
     //increments the hue by one to cycle through colors
     targetHue++;
     currentHue++;
@@ -64,15 +67,17 @@ void updateLEDsCallback() {
       updateLEDsTask.setInterval(SLOW_UPDATE_INTERVAL);
       isUpdatingHue = false;
     }
-  }else
-  {
-    currentHue++;
+  }else{
+    // Calculate the clockwise and counterclockwise distances
+    uint8_t clockwiseDistance = targetHue - currentHue;
+    uint8_t counterclockwiseDistance = currentHue - targetHue;
+    if (clockwiseDistance <= counterclockwiseDistance) //Decide on which direction has the shorter path
+        currentHue++; // Move clockwise
+    else currentHue--; // Move counterclockwise
   }
   // Fill the leds with a new color
   for(uint8_t i = 0; i < NUM_LEDS; ++i) {
     leds[i] = CHSV(currentHue, 255, 255);
   }
-  
-
   FastLED.show(); // Send the updated pixel colors to the hardware
 }

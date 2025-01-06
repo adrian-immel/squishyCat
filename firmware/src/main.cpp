@@ -9,10 +9,12 @@
 #include "led.h"
 #include "power.h"
 #include "buzzer.h"
+#include "tap.h"
 
 
 void setup() {
   Serial.begin(115200);
+  Wire.begin(48, 47);
   // setup code
   Serial.println("Buzzer init");
   buzzer_setup();
@@ -20,6 +22,8 @@ void setup() {
   power_setup();
   Serial.println("Led init");
   ledSetup();
+  Serial.println("Tap init");
+  tapSetup();
   Serial.println("Startup complete");
 
 }
@@ -28,4 +32,5 @@ void loop() {
   
   ledLoop();
   powerOffButtonPressedLoop();
+  tapLoop();
   }
