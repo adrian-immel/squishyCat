@@ -1,18 +1,30 @@
 #include <Arduino.h>
+#include <Wire.h>
+#include <SPI.h>
+#include <Adafruit_LIS3DH.h>
+#include <Adafruit_LPS2X.h>
+#include <Adafruit_Sensor.h>
+//#include "painlessMesh.h"
 
-// put function declarations here:
-int myFunction(int, int);
+#include "led.h"
+#include "power.h"
+#include "buzzer.h"
+
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(115200);
+  // setup code
+  Serial.println("Power init");
+  power_setup();
+  Serial.println("led init");
+  ledSetup();
+  Serial.println("Startup complete");
+
 }
 
 void loop() {
+  
+  ledLoop();
+  powerOffButtonPressedLoop();
   // put your main code here, to run repeatedly:
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
 }
