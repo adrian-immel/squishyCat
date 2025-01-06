@@ -14,9 +14,11 @@
 void setup() {
   Serial.begin(115200);
   // setup code
+  Serial.println("Buzzer init");
+  buzzer_setup();
   Serial.println("Power init");
   power_setup();
-  Serial.println("led init");
+  Serial.println("Led init");
   ledSetup();
   Serial.println("Startup complete");
 
@@ -26,5 +28,4 @@ void loop() {
   
   ledLoop();
   powerOffButtonPressedLoop();
-  // put your main code here, to run repeatedly:
-}
+  }

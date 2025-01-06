@@ -17,7 +17,6 @@ int32_t power_setup()
     pinMode(POWER_ON, OUTPUT);
     if (digitalRead(POWER_BTN))
         digitalWrite(POWER_ON, HIGH);
-    buzzer_setup();
     buzzer_tone(440, 50);
     buzzer_tone(880, 75);
 
