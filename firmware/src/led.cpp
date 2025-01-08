@@ -17,7 +17,7 @@
 CRGB leds[NUM_LEDS];
 uint8_t currentHue = 0;
 uint8_t targetHue = 0;
-bool isUpdatingHue = false;
+bool isMovingToTargetHue = 0;
 
 // Scheduler
 Scheduler runner;
@@ -43,12 +43,17 @@ void ledLoop() {
 
 void updateLed(uint8_t toUpdateHue){ 
   targetHue = toUpdateHue;
-  isUpdatingHue = true;
-  updateLEDsTask.setInterval(FAST_UPDATE_INTERVAL);
+  isMovingToTargetHue = 1;
+  fastColorChange(1);
 }
 
 void setRandomColor(){
-  updateLed(targetHue + random(75, 180));
+  updateLed(targetHue + random(75, 150));
+}
+
+void fastColorChange(bool startOrStop){
+  if(startOrStop) updateLEDsTask.setInterval(FAST_UPDATE_INTERVAL);
+  else updateLEDsTask.setInterval(SLOW_UPDATE_INTERVAL);
 }
 
 void ledOff()
@@ -62,10 +67,10 @@ void updateLEDsCallback() {
     //increments the hue by one to cycle through colors
     targetHue++;
     currentHue++;
-    if (isUpdatingHue)
+    if (isMovingToTargetHue)
     {
-      updateLEDsTask.setInterval(SLOW_UPDATE_INTERVAL);
-      isUpdatingHue = false;
+      fastColorChange(0);
+      isMovingToTargetHue = 0;
     }
   }else{
     // Calculate the clockwise and counterclockwise distances
