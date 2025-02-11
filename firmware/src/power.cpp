@@ -9,6 +9,10 @@
 #define ADC_PWR_EN  GPIO_NUM_7
 #define ADC_BAT_V   GPIO_NUM_6
 #define CHG_STAT    GPIO_NUM_11
+#define SHUTDOWN_DELAY 2000
+
+unsigned long buttonDownTime = 0;
+
 
 int32_t power_setup()
 {   
@@ -36,14 +40,12 @@ void power_off()
 }
 
 void powerOffButtonPressedLoop (){
-    Serial.println("Shutdown Initalized");
-    unsigned long buttonDownTime = millis();
-    while (digitalRead(POWER_BTN))
+    if (!digitalRead(POWER_BTN))
     {
-        if (millis() - buttonDownTime >= 1500){
-            power_off();
-        }
-        delay(10);
+        buttonDownTime = millis();
     }
-
+    else if ((millis() - buttonDownTime) > SHUTDOWN_DELAY)
+    {
+        power_off();
+    }
 }
