@@ -10,6 +10,7 @@
 #include "power.h"
 #include "buzzer.h"
 #include "tap.h"
+#include "squish.h"
 
 
 void setup() {
@@ -24,6 +25,8 @@ void setup() {
   ledSetup();
   Serial.println("Tap init");
   tapSetup();
+  Serial.println("Squish init");
+  squishSetup();
   Serial.println("Startup complete");
 
 }
@@ -33,4 +36,5 @@ void loop() {
   ledLoop();
   powerOffButtonPressedLoop();
   tapLoop();
+  squishLoop();
   }

@@ -4,6 +4,7 @@
 #include <Adafruit_Sensor.h>
 #include "led.h"
 #include "buzzer.h"
+#include "squish.h"
 
 // Adjust this number for the sensitivity of the 'click' force
 // this strongly depend on the range! for 16G, try 5-10
@@ -18,6 +19,7 @@ int32_t tapSetup(){
     
     if (! lis.begin(0x18)) {   // change this to 0x19 for alternative i2c address
         Serial.println("Couldnt start tap sensor");
+        return 1;
     }
     lis.setRange(LIS3DH_RANGE_8_G);
     // 0 = turn off click detection & interrupt
@@ -30,7 +32,7 @@ int32_t tapSetup(){
 
 void tapLoop(){
     uint8_t click = lis.getClick();
-    if ((click & 0x10) && ((millis() - lastDebounceTime) > DEBOUNCEDELAY)){
+    if ((click & 0x10) && ((millis() - lastDebounceTime) > DEBOUNCEDELAY) && !isSquished()){
         setRandomColor();
         lastDebounceTime = millis();
     }
