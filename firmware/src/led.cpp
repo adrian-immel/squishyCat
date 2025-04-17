@@ -11,7 +11,7 @@
 #define LED_TYPE    WS2812B  // Type of LED strip
 #define COLOR_ORDER GRB      // Color order of the LED strip
 #define FAST_UPDATE_INTERVAL 5 // Interval for faster updates temporarily
-#define SLOW_UPDATE_INTERVAL 50 // Interval for slow continuous update
+#define SLOW_UPDATE_INTERVAL 55 // Interval for slow continuous update
 
 
 CRGB leds[NUM_LEDS];

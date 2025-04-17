@@ -11,7 +11,7 @@
     bool   firstRead     = true;
     float  avgPressure   = 0;
 
-    #define pressureThreshold 0.1
+    #define pressureThreshold 0.15
     #define interuptPin 12
 
     bool newValueAvalible = false;
@@ -27,6 +27,7 @@
             return 1;
         }
         lps.setDataRate(LPS22_RATE_50_HZ);
+        delay(25); //wait for first reading
         lps.getEvent(&pressure, &temp);
         avgPressure = pressure.pressure; // first sample just seeds it
         
@@ -49,7 +50,7 @@
 
     void squishLoop(){
                 
-        if (!newValueAvalible) return;   // Only proceed if there's a new value
+        if (!newValueAvalible ) return;   // Only proceed if there's a new value 
         newValueAvalible = false;
 
         lps.getEvent(&pressure, &temp);
@@ -57,15 +58,15 @@
         float movingpressureThreshold = avgPressure + pressureThreshold;
         
  
-        if(pressure.pressure > movingpressureThreshold){
-            updateLed(getCurrentHue() + 64);
+        if(pressure.pressure > movingpressureThreshold && millis() > 1000){
+            updateLed(getCurrentHue() + 70);
             lastsquish = millis();
             Serial.println("Squish detected");
             // (9/10)*old + (1/10)*new
             avgPressure = (avgPressure * 9 + pressure.pressure) / 10.0;
         }else{
-            // (4/5)*old + (1/5)*new
-        avgPressure = (avgPressure * 4 + pressure.pressure) / 5.0;
+            // (5/6)*old + (1/6)*new
+            avgPressure = (avgPressure * 5 + pressure.pressure) / 6.0;
 
         }
 
