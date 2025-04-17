@@ -7,10 +7,10 @@
 
 #define LED_PIN     GPIO_NUM_3        // Pin where your data line is connected
 #define NUM_LEDS    4       // Number of LEDs in your strip
-#define BRIGHTNESS  175      // Brightness of the LEDs (0 - 255)
+#define BRIGHTNESS  180      // Brightness of the LEDs (0 - 255)
 #define LED_TYPE    WS2812B  // Type of LED strip
 #define COLOR_ORDER GRB      // Color order of the LED strip
-#define FAST_UPDATE_INTERVAL 4 // Interval for faster updates temporarily
+#define FAST_UPDATE_INTERVAL 5 // Interval for faster updates temporarily
 #define SLOW_UPDATE_INTERVAL 50 // Interval for slow continuous update
 
 
@@ -48,7 +48,11 @@ void updateLed(uint8_t toUpdateHue){
 }
 
 void setRandomColor(){
-  updateLed(targetHue + random(75, 150));
+  updateLed(targetHue + random(75, 120));
+}
+
+uint8_t getCurrentHue(){
+  return currentHue;
 }
 
 void fastColorChange(bool startOrStop){

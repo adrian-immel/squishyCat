@@ -7,5 +7,6 @@ void updateLed(uint8_t);
 void ledOff();
 void setRandomColor();
 void fastColorChange(bool);
+uint8_t getCurrentHue();
 
 #endif /* __LED_H__ */

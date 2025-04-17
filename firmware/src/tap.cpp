@@ -9,7 +9,7 @@
 // Adjust this number for the sensitivity of the 'click' force
 // this strongly depend on the range! for 16G, try 5-10
 // for 8G, try 10-20. for 4G try 20-40. for 2G try 40-80
-#define CLICKTHRESHHOLD 25
+#define CLICKTHRESHHOLD 35
 #define DEBOUNCEDELAY 300
 
 Adafruit_LIS3DH lis = Adafruit_LIS3DH();
@@ -35,6 +35,8 @@ void tapLoop(){
     if ((click & 0x10) && ((millis() - lastDebounceTime) > DEBOUNCEDELAY) && !isSquished()){
         setRandomColor();
         lastDebounceTime = millis();
+        Serial.println("Tap detected");
+
     }
 
 }
