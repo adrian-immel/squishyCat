@@ -7,16 +7,16 @@
 
 #define LED_PIN     GPIO_NUM_3        // Pin where your data line is connected
 #define NUM_LEDS    4       // Number of LEDs in your strip
-#define BRIGHTNESS  180      // Brightness of the LEDs (0 - 255)
+#define BRIGHTNESS  195      // Brightness of the LEDs (0 - 255)
 #define LED_TYPE    WS2812B  // Type of LED strip
 #define COLOR_ORDER GRB      // Color order of the LED strip
-#define FAST_UPDATE_INTERVAL 5 // Interval for faster updates temporarily
-#define SLOW_UPDATE_INTERVAL 55 // Interval for slow continuous update
+#define FAST_UPDATE_INTERVAL 4 // Interval for faster updates temporarily
+#define SLOW_UPDATE_INTERVAL 85 // Interval for slow continuous update
 
 
 CRGB leds[NUM_LEDS];
-uint8_t currentHue = 0;
-uint8_t targetHue = 0;
+uint8_t currentHue = random(0, 255);
+uint8_t targetHue = currentHue;
 bool isMovingToTargetHue = 0;
 
 // Scheduler
