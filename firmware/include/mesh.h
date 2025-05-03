@@ -49,8 +49,6 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len);
 
 // Message processing functions
 void processColorMessage(mesh_message* msg);
-void handleColorSetMessage(uint8_t colorValue);
-void handleColorUpdateMessage(uint8_t colorValue);
 
 // Message sending functions
 void sendColorSetMessage(uint8_t colorValue);

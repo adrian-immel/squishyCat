@@ -139,34 +139,6 @@ bool addPeer(const uint8_t *mac_addr) {
   return true;
 }
 
-// Process a received color message
-void handleColorSetMessage(uint8_t colorValue) {
-  // Set color directly
-  currentColor = colorValue;
-  Serial.print("New color set: ");
-  Serial.println(currentColor);
-
-  // *** USER CODE AREA ***
-  // Add your code here to handle the COLOR_SET message
-  // For example, set an LED color or control other hardware
-  // analogWrite(LED_PIN, currentColor);
-  // *** END USER CODE AREA ***
-}
-
-// Process a color update message
-void handleColorUpdateMessage(uint8_t colorValue) {
-  // Update the color (e.g., increment)
-  currentColor += colorValue;
-  Serial.print("Color updated to: ");
-  Serial.println(currentColor);
-
-  // *** USER CODE AREA ***
-  // Add your code here to handle the COLOR_UPDATE message
-  // For example, adjust an LED color or control other hardware
-  // analogWrite(LED_PIN, currentColor);
-  // *** END USER CODE AREA ***
-}
-
 // Process a color message based on its type
 void processColorMessage(mesh_message* msg) {
   if (msg->msgType == MSG_COLOR_SET) {
@@ -224,9 +196,6 @@ void sendColorSetMessage(uint8_t colorValue) {
   memcpy(msg.senderMac, myMac, 6);
   msg.messageId = messageCounter++;
 
-  // Process the message locally first
-  handleColorSetMessage(msg.colorValue);
-
   // Send the message to all known peers
   for (int i = 0; i < peerCount; i++) {
     esp_now_send(knownPeers[i], (uint8_t*)&msg, sizeof(mesh_message));
@@ -240,9 +209,6 @@ void sendColorUpdateMessage(uint8_t colorValue) {
   msg.colorValue = colorValue;
   memcpy(msg.senderMac, myMac, 6);
   msg.messageId = messageCounter++;
-
-  // Process the message locally first
-  handleColorUpdateMessage(msg.colorValue);
 
   // Send the message to all known peers
   for (int i = 0; i < peerCount; i++) {
