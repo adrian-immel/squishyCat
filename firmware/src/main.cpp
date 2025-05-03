@@ -1,16 +1,12 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include <SPI.h>
-#include <Adafruit_LIS3DH.h>
-#include <Adafruit_LPS2X.h>
-#include <Adafruit_Sensor.h>
-//#include "painlessMesh.h"
 
 #include "led.h"
 #include "power.h"
 #include "buzzer.h"
 #include "tap.h"
 #include "squish.h"
+#include "mesh.h"
 
 
 void setup() {
@@ -27,6 +23,8 @@ void setup() {
   tapSetup();
   Serial.println("Squish init");
   squishSetup();
+  Serial.println("Mesh init");
+  initMeshNetwork();
   Serial.println("Startup complete");
 
 }

@@ -2,7 +2,6 @@
 #include <FastLED.h>
 #include <TaskScheduler.h>
 #include "led.h"
-#include "buzzer.h"
 
 
 #define LED_PIN     GPIO_NUM_3        // Pin where your data line is connected
