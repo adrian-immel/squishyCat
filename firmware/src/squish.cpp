@@ -10,7 +10,7 @@
     unsigned long lastSquish = millis();
     float  avgPressure   = 0.0;
 
-    #define pressureThreshold 0.12
+    #define pressureThreshold 0.14
     #define interruptPin 12
     #define NUM_READINGS 10
 
@@ -71,8 +71,8 @@
 
 
  
-        if(pressure.pressure > movingPressureThreshold && millis() > 1000){
-            updateLed(getCurrentHue() + 30);
+        if(pressure.pressure > movingPressureThreshold && millis() > 2000){
+            updateLed(getCurrentHue() + 25);
             lastSquish = millis();
             Serial.println("Squish detected");
             pressureReadings[readingIndex] = (pressureReadings[readingIndex]) - 0.12;

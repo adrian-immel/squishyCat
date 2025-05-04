@@ -1,15 +1,12 @@
 #include "led.h"
 
-#include "mesh.h"
-
-
 CRGB leds[NUM_LEDS];
 uint8_t currentHue = random(0, 255);
 uint8_t targetHue = currentHue;
-bool isMovingToTargetHue = false;
 // Scheduler
 Task updateLEDsTask(SLOW_UPDATE_INTERVAL, TASK_FOREVER, &updateLEDsCallback);
-
+bool isMovingToTargetHue = false;
+bool sendMeshMsg = false;
 
 int32_t ledSetup(Scheduler &runner){
   // configure FASTLED
@@ -23,11 +20,11 @@ int32_t ledSetup(Scheduler &runner){
 
 
 
-void updateLed(const uint8_t toUpdateHue, const bool sendMeshMsg){
+void updateLed(const uint8_t toUpdateHue){
   targetHue = toUpdateHue;
-  isMovingToTargetHue = 1;
-  fastColorChange(1);
-  if (sendMeshMsg) sendColorSetMessage(targetHue); //bool to stop a mesh message loop
+  isMovingToTargetHue = true;
+  fastColorChange(true);
+  sendColorSetMessage(targetHue);
 }
 
 
@@ -39,9 +36,18 @@ uint8_t getCurrentHue(){
   return currentHue;
 }
 
-void fastColorChange(bool startOrStop){
+void fastColorChange(const bool startOrStop){
   if(startOrStop) updateLEDsTask.setInterval(FAST_UPDATE_INTERVAL);
   else updateLEDsTask.setInterval(SLOW_UPDATE_INTERVAL);
+}
+void MeshColorChange(const uint8_t toUpdateHue)
+{
+  //if the difference is less than 10, don't change the color
+  //if (toUpdateHue - targetHue <= 10) return;
+  targetHue = toUpdateHue;
+  isMovingToTargetHue = true;
+  sendMeshMsg = false;
+  fastColorChange(true);
 }
 
 void ledOff()
@@ -59,18 +65,20 @@ void updateLEDsCallback() {
     {
       fastColorChange(false);
       isMovingToTargetHue = false;
+      if (sendMeshMsg) sendColorSetMessage(targetHue);
+      sendMeshMsg = true;
     }
   }else{
     // Calculate the clockwise and counterclockwise distances
-    uint8_t clockwiseDistance = targetHue - currentHue;
-    uint8_t counterclockwiseDistance = currentHue - targetHue;
+    const uint8_t clockwiseDistance = targetHue - currentHue;
+    const uint8_t counterclockwiseDistance = currentHue - targetHue;
     if (clockwiseDistance <= counterclockwiseDistance) //Decide on which direction has the shorter path
         currentHue++; // Move clockwise
     else currentHue--; // Move counterclockwise
   }
   // Fill the leds with a new color
-  for(uint8_t i = 0; i < NUM_LEDS; ++i) {
-    leds[i] = CHSV(currentHue, 255, 255);
+  for(auto & led : leds) {
+    led = CHSV(currentHue, 255, 255);
   }
   FastLED.show(); // Send the updated pixel colors to the hardware
 }

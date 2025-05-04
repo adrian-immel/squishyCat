@@ -21,9 +21,9 @@ void setup() {
   buzzer_setup();
   Serial.println("Power init");
   power_setup();
+  randomSeed(analogRead(0));
   // init task Scheduler
   runner.init();
-
   Serial.println("Led init");
   ledSetup(runner);
   Serial.println("Tap init");
