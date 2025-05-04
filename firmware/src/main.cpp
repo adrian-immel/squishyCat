@@ -4,9 +4,13 @@
 #include "led.h"
 #include "power.h"
 #include "buzzer.h"
+#include "mesh.h"
 #include "tap.h"
 #include "squish.h"
-#include "mesh.h"
+#include <TaskScheduler.h>
+
+
+Scheduler runner;
 
 
 void setup() {
@@ -17,22 +21,25 @@ void setup() {
   buzzer_setup();
   Serial.println("Power init");
   power_setup();
+  // init task Scheduler
+  runner.init();
+
   Serial.println("Led init");
-  ledSetup();
+  ledSetup(runner);
   Serial.println("Tap init");
   tapSetup();
   Serial.println("Squish init");
   squishSetup();
   Serial.println("Mesh init");
-  initMeshNetwork();
+  initMeshNetwork(runner);
   Serial.println("Startup complete");
 
 }
 
 void loop() {
   
-  ledLoop();
   powerOffButtonPressedLoop();
   tapLoop();
   squishLoop();
+  runner.execute();
   }

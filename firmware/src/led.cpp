@@ -1,50 +1,35 @@
-#include <Arduino.h>
-#include <FastLED.h>
-#include <TaskScheduler.h>
 #include "led.h"
 
-
-#define LED_PIN     GPIO_NUM_3        // Pin where your data line is connected
-#define NUM_LEDS    4       // Number of LEDs in your strip
-#define BRIGHTNESS  195      // Brightness of the LEDs (0 - 255)
-#define LED_TYPE    WS2812B  // Type of LED strip
-#define COLOR_ORDER GRB      // Color order of the LED strip
-#define FAST_UPDATE_INTERVAL 4 // Interval for faster updates temporarily
-#define SLOW_UPDATE_INTERVAL 85 // Interval for slow continuous update
+#include "mesh.h"
 
 
 CRGB leds[NUM_LEDS];
 uint8_t currentHue = random(0, 255);
 uint8_t targetHue = currentHue;
-bool isMovingToTargetHue = 0;
-
+bool isMovingToTargetHue = false;
 // Scheduler
-Scheduler runner;
-// Task for updating LEDs
-void updateLEDsCallback();
 Task updateLEDsTask(SLOW_UPDATE_INTERVAL, TASK_FOREVER, &updateLEDsCallback);
 
-int32_t ledSetup(){
+
+int32_t ledSetup(Scheduler &runner){
   // configure FASTLED
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(BRIGHTNESS);
   // Add task to the scheduler
-  runner.init();
   runner.addTask(updateLEDsTask);
   updateLEDsTask.enable();
   return 0;
 }
 
-void ledLoop() {
-  // Execute scheduler
-  runner.execute();
-}
 
-void updateLed(uint8_t toUpdateHue){ 
+
+void updateLed(const uint8_t toUpdateHue, const bool sendMeshMsg){
   targetHue = toUpdateHue;
   isMovingToTargetHue = 1;
   fastColorChange(1);
+  if (sendMeshMsg) sendColorSetMessage(targetHue); //bool to stop a mesh message loop
 }
+
 
 void setRandomColor(){
   updateLed(targetHue + random(75, 120));
@@ -72,8 +57,8 @@ void updateLEDsCallback() {
     currentHue++;
     if (isMovingToTargetHue)
     {
-      fastColorChange(0);
-      isMovingToTargetHue = 0;
+      fastColorChange(false);
+      isMovingToTargetHue = false;
     }
   }else{
     // Calculate the clockwise and counterclockwise distances

@@ -8,16 +8,21 @@
 #include <esp_now.h>
 #include <WiFi.h>
 #include <set>
-#include <vector>
+#include <led.h>
+#include <TaskSchedulerDeclarations.h>
 
-#include "led.h"
+
 
 // Message types
 #define MSG_COLOR_SET 1
 #define MSG_COLOR_UPDATE 2
+#define MSG_Hello 3
 
 // Maximum number of peers in ESP-NOW
-#define MAX_PEERS 20
+#define MAX_PEERS 10
+
+// sync interval
+#define SYNC_INTERVAL 20000
 
 // Structure for our messages
 typedef struct mesh_message {
@@ -36,10 +41,8 @@ extern uint8_t currentColor;
 extern uint8_t myMac[6];
 extern uint8_t broadcastAddress[6];
 
-// Function prototypes
-
 // Network management functions
-void initMeshNetwork();
+void initMeshNetwork(Scheduler &runner);
 bool addPeer(const uint8_t *mac_addr);
 bool isMessageDuplicate(uint32_t messageId);
 
@@ -48,10 +51,10 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status);
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len);
 
 // Message processing functions
-void processColorMessage(mesh_message* msg);
+void processColorMessage(const mesh_message* msg);
 
 // Message sending functions
 void sendColorSetMessage(uint8_t colorValue);
-void sendColorUpdateMessage(uint8_t colorValue);
+void sendColorUpdateMessage();
 
 #endif //MESH_H

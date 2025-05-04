@@ -2,6 +2,7 @@
 // Created by adrian on 03.05.25.
 //
 #include "mesh.h"
+
 // Global variables initialization
 std::set<uint32_t> receivedMessages;    // Stores IDs of already received messages
 uint8_t knownPeers[MAX_PEERS][6]; // Stores MAC addresses of known peers
@@ -10,21 +11,13 @@ uint32_t messageCounter = 0;            // Counter for outgoing messages
 uint8_t currentColor = 0;               // Current color value of the node
 uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // Broadcast address
 uint8_t myMac[6];                       // MAC address of this device
+Task syncLEDsTask(SYNC_INTERVAL + random(0, 2000), TASK_FOREVER, &sendColorUpdateMessage);
 
-// Status LED (optional)
-const int STATUS_LED = 2; // Built-in LED of ESP32
 
 // Initialize the mesh network
-void initMeshNetwork() {
-  Serial.begin(115200);
-  delay(1000); // Stability pause
-
-  // Initialize LED for status
-  pinMode(STATUS_LED, OUTPUT);
-  digitalWrite(STATUS_LED, LOW);
-
+void initMeshNetwork(Scheduler &runner) {
   // Initialize WiFi in station mode
-  WiFi.mode(WIFI_STA);
+  WiFiClass::mode(WIFI_STA);
 
   // Store MAC address
   WiFi.macAddress(myMac);
@@ -58,16 +51,19 @@ void initMeshNetwork() {
 
   // Initial announcement in the network
   Serial.println("ESP-NOW Mesh Network started");
-  digitalWrite(STATUS_LED, HIGH);
 
   // Send an initial broadcast message to announce presence
   mesh_message announceMsg;
-  announceMsg.msgType = MSG_COLOR_SET;
-  announceMsg.colorValue = currentColor;
+  announceMsg.msgType = MSG_Hello;
+  announceMsg.colorValue = 0;
   memcpy(announceMsg.senderMac, myMac, 6);
   announceMsg.messageId = messageCounter++;
 
-  esp_now_send(broadcastAddress, (uint8_t*)&announceMsg, sizeof(mesh_message));
+  esp_now_send(broadcastAddress, reinterpret_cast<uint8_t*>(&announceMsg), sizeof(mesh_message));
+
+  // setup periodic message send task
+  runner.addTask(syncLEDsTask);
+  syncLEDsTask.enable();
 }
 
 // Callback function for sent data
@@ -83,7 +79,7 @@ bool isMessageDuplicate(uint32_t messageId) {
   if (receivedMessages.find(messageId) != receivedMessages.end()) {
     return true;
   }
-  // Add message to the list
+  // Add a message to the list
   receivedMessages.insert(messageId);
   // Limit list size (optional) to control memory usage
   if (receivedMessages.size() > 100) {
@@ -140,25 +136,31 @@ bool addPeer(const uint8_t *mac_addr) {
 }
 
 // Process a color message based on its type
-void processColorMessage(mesh_message* msg) {
-  if (msg->msgType == MSG_COLOR_SET) {
-    updateLed(msg->colorValue);
+void processColorMessage(const mesh_message* msg) {
+  if (msg->msgType == MSG_COLOR_SET || msg->msgType == MSG_COLOR_UPDATE) {
+    updateLed(msg->colorValue, false);
+    Serial.print("Color updated received: ");
+    Serial.println(msg->colorValue);
   }
-  else if (msg->msgType == MSG_COLOR_UPDATE) {
-    updateLed(msg->colorValue);
+  else if (msg->msgType == MSG_Hello)
+  {
+    Serial.printf("Hello from:%02X%02X%02X%02X%02X%02X\n", msg->senderMac[0], msg->senderMac[1], msg->senderMac[2],
+              msg->senderMac[3], msg->senderMac[4], msg->senderMac[5]);
+  }else
+  {
+    Serial.printf("Unknown message type: %d\n", msg->msgType);
   }
-  Serial.print("Color updated received: ");
-  Serial.println(msg->colorValue);
+
 }
 
 // Callback function for received data
-void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
+void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, const int data_len) {
   if (data_len != sizeof(mesh_message)) {
     Serial.println("Invalid message size");
     return;
   }
 
-  mesh_message *msg = (mesh_message*)data;
+  auto *msg = (mesh_message*)data;
 
   // Duplicate check
   if (isMessageDuplicate(msg->messageId)) {
@@ -183,7 +185,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
     }
 
     if (!isSender) {
-      esp_now_send(knownPeers[i], (uint8_t*)msg, sizeof(mesh_message));
+      esp_now_send(knownPeers[i], reinterpret_cast<uint8_t*>(msg), sizeof(mesh_message));
     }
   }
 }
@@ -195,23 +197,26 @@ void sendColorSetMessage(uint8_t colorValue) {
   msg.colorValue = colorValue;
   memcpy(msg.senderMac, myMac, 6);
   msg.messageId = messageCounter++;
+  Serial.println("sending color set message...");
 
   // Send the message to all known peers
   for (int i = 0; i < peerCount; i++) {
-    esp_now_send(knownPeers[i], (uint8_t*)&msg, sizeof(mesh_message));
+    esp_now_send(knownPeers[i], reinterpret_cast<uint8_t*>(&msg), sizeof(mesh_message));
   }
 }
 
 // Send a color update message to all peers
-void sendColorUpdateMessage(uint8_t colorValue) {
+void sendColorUpdateMessage() {
   mesh_message msg;
   msg.msgType = MSG_COLOR_UPDATE;
-  msg.colorValue = colorValue;
+  msg.colorValue = getCurrentHue();
   memcpy(msg.senderMac, myMac, 6);
   msg.messageId = messageCounter++;
+  Serial.println("sending color update message...");
+
 
   // Send the message to all known peers
   for (int i = 0; i < peerCount; i++) {
-    esp_now_send(knownPeers[i], (uint8_t*)&msg, sizeof(mesh_message));
+    esp_now_send(knownPeers[i], reinterpret_cast<uint8_t*>(&msg), sizeof(mesh_message));
   }
 }
