@@ -53,14 +53,14 @@ void initMeshNetwork(Scheduler &runner) {
 }
 
 // Simplified callback for sent data
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+void OnDataSent(const uint8_t *mac_addr, const esp_now_send_status_t status) {
     if (status != ESP_NOW_SEND_SUCCESS) {
         Serial.println("Error sending message");
     }
 }
 
 // Check if the message has already been received
-bool isMessageDuplicate(uint32_t messageId) {
+bool isMessageDuplicate(const uint32_t messageId) {
     if (receivedMessages.find(messageId) != receivedMessages.end()) {
         return true;
     }
@@ -79,6 +79,7 @@ void processColorMessage(const mesh_message* msg) {
         Serial.print("Color set received: ");
         Serial.println(msg->colorValue);
     } else if (msg->msgType == MSG_COLOR_SYNC) {
+        if (lastSetTime + 500 >= millis()) return;
         MeshColorChange(msg->colorValue);
         Serial.print("Color sync received: ");
         Serial.println(msg->colorValue);
@@ -93,35 +94,34 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, const int data_len
         return;
     }
 
-    auto *msg = (mesh_message*)data;
+    const mesh_message* msg = (mesh_message*)data;
 
     // Duplicate check
     if (isMessageDuplicate(msg->messageId)) {
-        return; // Message has already been processed or is only sync package
+        return; // Message has already been processed
     }
 
     // Process the message
     processColorMessage(msg);
 
-    // Rebroadcast the message if
+    // Rebroadcast the message if Set Packet
     if (msg->msgType == MSG_COLOR_SET) esp_now_send(broadcastAddress, data, data_len);
 
 }
 
-void sendColorSetMessage(uint8_t colorValue) {
+void sendColorSetMessage(const uint8_t colorValue) {
+    lastSetTime = millis();
     mesh_message msg{};
     msg.msgType = MSG_COLOR_SET;
     msg.colorValue = colorValue;
     memcpy(msg.senderMac, myMac, 6);
     msg.messageId = esp_random();
     Serial.println("sending color set message...");
-
     esp_now_send(broadcastAddress, reinterpret_cast<uint8_t*>(&msg), sizeof(mesh_message));
 }
 
 void sendColorSyncMessage() {
-    if (lastSetTime + 1000 >= millis() || isMovingToTargetHue) return;
-    
+    if (lastSetTime + 500 >= millis() || isMovingToTargetHue) return;
     mesh_message msg{};
     msg.msgType = MSG_COLOR_SYNC;
     msg.colorValue = getCurrentHue();

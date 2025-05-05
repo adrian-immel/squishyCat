@@ -24,7 +24,7 @@ void updateLed(const uint8_t toUpdateHue){
   targetHue = toUpdateHue;
   isMovingToTargetHue = true;
   fastColorChange(true);
-  sendColorSetMessage(targetHue);
+  //sendColorSetMessage(targetHue);
 }
 
 
@@ -43,7 +43,7 @@ void fastColorChange(const bool startOrStop){
 void MeshColorChange(const uint8_t toUpdateHue)
 {
   //if the difference is less than 10, don't change the color
-  //if (toUpdateHue - targetHue <= 10) return;
+  if (toUpdateHue - targetHue <= 10) return;
   targetHue = toUpdateHue;
   isMovingToTargetHue = true;
   sendMeshMsg = false;
