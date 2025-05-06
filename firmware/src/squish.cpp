@@ -29,7 +29,7 @@
             Serial.println("Couldnt start pressure sensor");
             return 1;
         }
-        lps.setDataRate(LPS22_RATE_50_HZ);
+        lps.setDataRate(LPS22_RATE_25_HZ);
         // setup interrupt for new value
         lps.configureInterrupt(
             false,  // activeLow?  false => it will go HIGH on interrupt
@@ -72,7 +72,7 @@
 
  
         if(pressure.pressure > movingPressureThreshold && millis() > 2000){
-            updateLed(getCurrentHue() + 25);
+            updateLed(getCurrentHue() + 35);
             lastSquish = millis();
             Serial.println("Squish detected");
             pressureReadings[readingIndex] = (pressureReadings[readingIndex]) - 0.12;

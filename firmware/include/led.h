@@ -8,7 +8,7 @@
 
 #define LED_PIN     GPIO_NUM_3        // Pin where your data line is connected
 #define NUM_LEDS    4       // Number of LEDs in your strip
-#define BRIGHTNESS  195      // Brightness of the LEDs (0 - 255)
+#define BRIGHTNESS  200      // Brightness of the LEDs (0 - 255)
 #define LED_TYPE    WS2812B  // Type of LED strip
 #define COLOR_ORDER GRB      // Color order of the LED strip
 #define FAST_UPDATE_INTERVAL 4 // Interval for faster updates temporarily

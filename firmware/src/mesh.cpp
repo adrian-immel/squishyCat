@@ -65,7 +65,7 @@ bool isMessageDuplicate(const uint32_t messageId) {
         return true;
     }
     receivedMessages.insert(messageId);
-    if (receivedMessages.size() > 50) {
+    if (receivedMessages.size() > 64) {
         receivedMessages.erase(receivedMessages.begin());
     }
     return false;
@@ -117,6 +117,8 @@ void sendColorSetMessage(const uint8_t colorValue) {
     memcpy(msg.senderMac, myMac, 6);
     msg.messageId = esp_random();
     Serial.println("sending color set message...");
+    esp_now_send(broadcastAddress, reinterpret_cast<uint8_t*>(&msg), sizeof(mesh_message));
+    delay(50); //rebroadcast message 2 times
     esp_now_send(broadcastAddress, reinterpret_cast<uint8_t*>(&msg), sizeof(mesh_message));
 }
 

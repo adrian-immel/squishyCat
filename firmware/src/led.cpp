@@ -24,7 +24,7 @@ void updateLed(const uint8_t toUpdateHue){
   targetHue = toUpdateHue;
   isMovingToTargetHue = true;
   fastColorChange(true);
-  //sendColorSetMessage(targetHue);
+  sendColorSetMessage(targetHue);
 }
 
 
@@ -65,7 +65,7 @@ void updateLEDsCallback() {
     {
       fastColorChange(false);
       isMovingToTargetHue = false;
-      if (sendMeshMsg) sendColorSetMessage(targetHue);
+      if (sendMeshMsg) //sendColorSetMessage(targetHue);
       sendMeshMsg = true;
     }
   }else{
