@@ -1,51 +1,32 @@
-#include <Arduino.h>
-#include <FastLED.h>
-#include <TaskScheduler.h>
 #include "led.h"
-#include "buzzer.h"
-
-
-#define LED_PIN     GPIO_NUM_3        // Pin where your data line is connected
-#define NUM_LEDS    4       // Number of LEDs in your strip
-#define BRIGHTNESS  195      // Brightness of the LEDs (0 - 255)
-#define LED_TYPE    WS2812B  // Type of LED strip
-#define COLOR_ORDER GRB      // Color order of the LED strip
-#define FAST_UPDATE_INTERVAL 4 // Interval for faster updates temporarily
-#define SLOW_UPDATE_INTERVAL 85 // Interval for slow continuous update
-
 
 CRGB leds[NUM_LEDS];
 uint8_t currentHue = random(0, 255);
 uint8_t targetHue = currentHue;
-bool isMovingToTargetHue = 0;
-
 // Scheduler
-Scheduler runner;
-// Task for updating LEDs
-void updateLEDsCallback();
 Task updateLEDsTask(SLOW_UPDATE_INTERVAL, TASK_FOREVER, &updateLEDsCallback);
+bool isMovingToTargetHue = false;
+bool sendMeshMsg = false;
 
-int32_t ledSetup(){
+int32_t ledSetup(Scheduler &runner){
   // configure FASTLED
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(BRIGHTNESS);
   // Add task to the scheduler
-  runner.init();
   runner.addTask(updateLEDsTask);
   updateLEDsTask.enable();
   return 0;
 }
 
-void ledLoop() {
-  // Execute scheduler
-  runner.execute();
+
+
+void updateLed(const uint8_t toUpdateHue){
+  targetHue = toUpdateHue;
+  isMovingToTargetHue = true;
+  fastColorChange(true);
+  sendColorSetMessage(targetHue);
 }
 
-void updateLed(uint8_t toUpdateHue){ 
-  targetHue = toUpdateHue;
-  isMovingToTargetHue = 1;
-  fastColorChange(1);
-}
 
 void setRandomColor(){
   updateLed(targetHue + random(75, 120));
@@ -55,9 +36,18 @@ uint8_t getCurrentHue(){
   return currentHue;
 }
 
-void fastColorChange(bool startOrStop){
+void fastColorChange(const bool startOrStop){
   if(startOrStop) updateLEDsTask.setInterval(FAST_UPDATE_INTERVAL);
   else updateLEDsTask.setInterval(SLOW_UPDATE_INTERVAL);
+}
+void MeshColorChange(const uint8_t toUpdateHue)
+{
+  //if the difference is less than 10, don't change the color
+  if (toUpdateHue - targetHue <= 10) return;
+  targetHue = toUpdateHue;
+  isMovingToTargetHue = true;
+  sendMeshMsg = false;
+  fastColorChange(true);
 }
 
 void ledOff()
@@ -73,20 +63,22 @@ void updateLEDsCallback() {
     currentHue++;
     if (isMovingToTargetHue)
     {
-      fastColorChange(0);
-      isMovingToTargetHue = 0;
+      fastColorChange(false);
+      isMovingToTargetHue = false;
+      if (sendMeshMsg) //sendColorSetMessage(targetHue);
+      sendMeshMsg = true;
     }
   }else{
     // Calculate the clockwise and counterclockwise distances
-    uint8_t clockwiseDistance = targetHue - currentHue;
-    uint8_t counterclockwiseDistance = currentHue - targetHue;
+    const uint8_t clockwiseDistance = targetHue - currentHue;
+    const uint8_t counterclockwiseDistance = currentHue - targetHue;
     if (clockwiseDistance <= counterclockwiseDistance) //Decide on which direction has the shorter path
         currentHue++; // Move clockwise
     else currentHue--; // Move counterclockwise
   }
   // Fill the leds with a new color
-  for(uint8_t i = 0; i < NUM_LEDS; ++i) {
-    leds[i] = CHSV(currentHue, 255, 255);
+  for(auto & led : leds) {
+    led = CHSV(currentHue, 255, 255);
   }
   FastLED.show(); // Send the updated pixel colors to the hardware
 }
