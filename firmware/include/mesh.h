@@ -19,7 +19,7 @@
 #define MAX_PEERS 10
 
 // sync interval
-#define SYNC_INTERVAL 1500
+#define SYNC_INTERVAL 1200
 
 // Structure to hold message data
 struct mesh_message {
@@ -39,5 +39,7 @@ void processColorMessage(const mesh_message* msg);
 // Message sending functions
 void sendColorSetMessage(uint8_t colorValue);
 void sendColorSyncMessage();
+void sendMeshMessage(mesh_message& msg);
+
 
 #endif //MESH_H

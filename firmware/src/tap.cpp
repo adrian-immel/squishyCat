@@ -17,7 +17,7 @@ unsigned long lastDebounceTime = millis();
 
 int32_t tapSetup(){
     
-    if (! lis.begin(0x18)) {   // change this to 0x19 for alternative i2c address
+    if (! lis.begin(0x18)) {   // change this to 0x19 for the alternative i2c address
         Serial.println("Couldnt start tap sensor");
         return 1;
     }
@@ -33,10 +33,9 @@ int32_t tapSetup(){
 void tapLoop(){
     uint8_t click = lis.getClick();
     if ((click & 0x10) && ((millis() - lastDebounceTime) > DEBOUNCEDELAY) && !isSquished() && millis() > 700){
+        Serial.println("Tap detected");
         setRandomColor();
         lastDebounceTime = millis();
-        Serial.println("Tap detected");
-
     }
 
 }
