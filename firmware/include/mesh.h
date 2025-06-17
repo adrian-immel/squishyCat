@@ -19,7 +19,7 @@
 #define MAX_PEERS 10
 
 // sync interval
-#define SYNC_INTERVAL 1000
+#define SYNC_INTERVAL 1500
 
 // Structure to hold message data
 struct mesh_message {

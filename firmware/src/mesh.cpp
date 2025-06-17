@@ -6,7 +6,7 @@ uint32_t messageCounter = 0;            // Counter for outgoing messages
 uint8_t currentColor = 0;               // Current color value of the node
 uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // Broadcast address
 uint8_t myMac[6];                       // MAC address of this device
-Task syncLEDsTask(SYNC_INTERVAL + random(0, 500), TASK_FOREVER, &sendColorSyncMessage);
+Task syncLEDsTask(SYNC_INTERVAL + random(0, 250), TASK_FOREVER, &sendColorSyncMessage);
 unsigned long lastSetTime;
 
 // Initialize the mesh network
@@ -48,11 +48,11 @@ void initMeshNetwork(Scheduler &runner) {
 
     // setup periodic message send task
     runner.addTask(syncLEDsTask);
+    lastSetTime = 0;
     syncLEDsTask.enable();
-    lastSetTime = millis() + SYNC_INTERVAL;
 }
 
-// Simplified callback for sent data
+// callback for sent data
 void OnDataSent(const uint8_t *mac_addr, const esp_now_send_status_t status) {
     if (status != ESP_NOW_SEND_SUCCESS) {
         Serial.println("Error sending message");
@@ -74,15 +74,17 @@ bool isMessageDuplicate(const uint32_t messageId) {
 // Process a color message based on its type
 void processColorMessage(const mesh_message* msg) {
     if (msg->msgType == MSG_COLOR_SET) {
-        lastSetTime = millis();
         MeshColorChange(msg->colorValue);
+        lastSetTime = millis();
         Serial.print("Color set received: ");
         Serial.println(msg->colorValue);
     } else if (msg->msgType == MSG_COLOR_SYNC) {
-        if (lastSetTime + 500 >= millis()) return;
-        MeshColorChange(msg->colorValue);
-        Serial.print("Color sync received: ");
-        Serial.println(msg->colorValue);
+        if (lastSetTime + 500 < millis())
+        {
+            MeshColorChange(msg->colorValue);
+            Serial.print("Color sync received: ");
+            Serial.println(msg->colorValue);
+        }
     } else {
         Serial.printf("Unknown message type: %d\n", msg->msgType);
     }
@@ -110,7 +112,6 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, const int data_len
 }
 
 void sendColorSetMessage(const uint8_t colorValue) {
-    lastSetTime = millis();
     mesh_message msg{};
     msg.msgType = MSG_COLOR_SET;
     msg.colorValue = colorValue;
@@ -118,12 +119,13 @@ void sendColorSetMessage(const uint8_t colorValue) {
     msg.messageId = esp_random();
     Serial.println("sending color set message...");
     esp_now_send(broadcastAddress, reinterpret_cast<uint8_t*>(&msg), sizeof(mesh_message));
-    delay(50); //rebroadcast message 2 times
-    esp_now_send(broadcastAddress, reinterpret_cast<uint8_t*>(&msg), sizeof(mesh_message));
+    //delay(50); //rebroadcast message 2 times
+    //esp_now_send(broadcastAddress, reinterpret_cast<uint8_t*>(&msg), sizeof(mesh_message));
+    lastSetTime = millis();
 }
 
 void sendColorSyncMessage() {
-    if (lastSetTime + 500 >= millis() || isMovingToTargetHue) return;
+    if (isMovingToTargetHue || millis() < 2000) return; // skip sync if moving to Target Hue || directly after init
     mesh_message msg{};
     msg.msgType = MSG_COLOR_SYNC;
     msg.colorValue = getCurrentHue();
