@@ -22,9 +22,9 @@ int32_t ledSetup(Scheduler &runner){
 
 void updateLed(const uint8_t toUpdateHue){
   targetHue = toUpdateHue;
+  sendColorSetMessage(targetHue);
   isMovingToTargetHue = true;
   fastColorChange(true);
-  sendColorSetMessage(targetHue);
 }
 
 
@@ -36,6 +36,10 @@ uint8_t getCurrentHue(){
   return currentHue;
 }
 
+uint8_t getTargetHue(){
+  return targetHue;
+}
+
 void fastColorChange(const bool startOrStop){
   if(startOrStop) updateLEDsTask.setInterval(FAST_UPDATE_INTERVAL);
   else updateLEDsTask.setInterval(SLOW_UPDATE_INTERVAL);
@@ -43,7 +47,7 @@ void fastColorChange(const bool startOrStop){
 void MeshColorChange(const uint8_t toUpdateHue)
 {
   //if the difference is less than 10, don't change the color
-  if (toUpdateHue - targetHue <= 10) return;
+  if (toUpdateHue - targetHue < 10) return;
   targetHue = toUpdateHue;
   isMovingToTargetHue = true;
   sendMeshMsg = false;

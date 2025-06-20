@@ -6,7 +6,7 @@ uint32_t messageCounter = 0;            // Counter for outgoing messages
 uint8_t currentColor = 0;               // Current color value of the node
 uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // Broadcast address
 uint8_t myMac[6];                       // MAC address of this device
-Task syncLEDsTask(SYNC_INTERVAL + random(0, 250), TASK_FOREVER, &sendColorSyncMessage);
+Task syncLEDsTask(SYNC_INTERVAL + random(0, 200), TASK_FOREVER, &sendColorSyncMessage);
 unsigned long lastSetTime;
 
 // Initialize the mesh network
@@ -65,7 +65,7 @@ bool isMessageDuplicate(const uint32_t messageId) {
         return true;
     }
     receivedMessages.insert(messageId);
-    if (receivedMessages.size() > 64) {
+    if (receivedMessages.size() > 32) {
         receivedMessages.erase(receivedMessages.begin());
     }
     return false;
@@ -79,7 +79,7 @@ void processColorMessage(const mesh_message* msg) {
         Serial.print("Color set received: ");
         Serial.println(msg->colorValue);
     } else if (msg->msgType == MSG_COLOR_SYNC) {
-        if (lastSetTime + 500 < millis())
+        if (lastSetTime + 250 < millis())
         {
             MeshColorChange(msg->colorValue);
             Serial.print("Color sync received: ");
@@ -117,21 +117,27 @@ void sendColorSetMessage(const uint8_t colorValue) {
     msg.colorValue = colorValue;
     memcpy(msg.senderMac, myMac, 6);
     msg.messageId = esp_random();
-    Serial.println("sending color set message...");
-    esp_now_send(broadcastAddress, reinterpret_cast<uint8_t*>(&msg), sizeof(mesh_message));
-    //delay(50); //rebroadcast message 2 times
-    //esp_now_send(broadcastAddress, reinterpret_cast<uint8_t*>(&msg), sizeof(mesh_message));
+    Serial.print("sending color set message:");
+    Serial.println(msg.colorValue);
+    sendMeshMessage(msg);
     lastSetTime = millis();
 }
 
 void sendColorSyncMessage() {
-    if (isMovingToTargetHue || millis() < 2000) return; // skip sync if moving to Target Hue || directly after init
+    if (isMovingToTargetHue && millis() < 2000) return; // skip sync if moving to Target Hue || directly after init
     mesh_message msg{};
     msg.msgType = MSG_COLOR_SYNC;
-    msg.colorValue = getCurrentHue();
+    msg.colorValue = getTargetHue();
     memcpy(msg.senderMac, myMac, 6);
-    msg.messageId = esp_random();;
-    Serial.println("sending color update message...");
+    msg.messageId = esp_random();
+    Serial.print("sending color update message:");
+    Serial.println(msg.colorValue);
+    sendMeshMessage(msg);
+}
 
+void sendMeshMessage(mesh_message& msg) {
+    receivedMessages.insert(msg.messageId); //add to messages to known ones
+    esp_now_send(broadcastAddress, reinterpret_cast<uint8_t*>(&msg), sizeof(mesh_message));
+    delay(75);
     esp_now_send(broadcastAddress, reinterpret_cast<uint8_t*>(&msg), sizeof(mesh_message));
 }

@@ -22,6 +22,8 @@ void ledOff();
 void setRandomColor();
 void fastColorChange(bool);
 uint8_t getCurrentHue();
+uint8_t getTargetHue();
+
 // Task for updating LEDs
 void updateLEDsCallback();
 
